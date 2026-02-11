@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Pagamentos - Futebol</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+}
+.container {
+    width: 500px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+h1 {
+    text-align: center;
+}
+label {
+    font-weight: bold;
+}
+input, select, button {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+button {
+    cursor: pointer;
+}
+.status {
+    background: #eee;
+    padding: 10px;
+    height: 140px;
+    overflow-y: auto;
+    font-family: Consolas;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>⚽ Controle de Pagamentos</h1>
+
+<label>Atleta</label>
+<select id="nome">
+    <option>João</option>
+    <option>Pedro</option>
+    <option>Lucas</option>
+</select>
+
+<label>Valor</label>
+<input type="number" id="valor">
+
+<label>Data</label>
+<input type="date" id="data">
+
+<label>Forma de pagamento</label>
+<select id="forma">
+    <option>Pix</option>
+    <option>Dinheiro</option>
+    <option>Cartão</option>
+    <option>Outro</option>
+</select>
+
+<label>Observações</label>
+<input type="text" id="obs">
+
+<button onclick="registrar()">💾 Registrar Pagamento</button>
+<button onclick="gerarRelatorio()">📊 Gerar Relatório</button>
+
+<div class="status" id="status"></div>
+
+<canvas id="grafico"></canvas>
+</div>
+
+<script>
+let pagamentos = JSON.parse(localStorage.getItem("pagamentos")) || [];
+
+function registrar() {
+    let nome = document.getElementById("nome").value;
+    let valor = parseFloat(document.getElementById("valor").value);
+    let data = document.getElementById("data").value;
+    let forma = document.getElementById("forma").value;
+    let obs = document.getElementById("obs").value;
+
+    if (!nome || !valor || !data) {
+        status("⚠️ Preencha todos os campos");
+        return;
+    }
+
+    pagamentos.push({ nome, valor, data, forma, obs });
+    localStorage.setItem("pagamentos", JSON.stringify(pagamentos));
+
+    status(`✅ Pagamento registrado para ${nome}<br>💰 R$ ${valor.toFixed(2)}`);
+}
+
+function gerarRelatorio() {
+    let pagaram = {};
+    pagamentos.forEach(p => pagaram[p.nome] = true);
+
+    let total = pagamentos.reduce((s, p) => s + p.valor, 0);
+
+    status(`📊 Total pagamentos: ${pagamentos.length}<br>💰 Total arrecadado: R$ ${total.toFixed(2)}`);
+
+    let formas = {};
+    pagamentos.forEach(p => {
+        formas[p.forma] = (formas[p.forma] || 0) + p.valor;
+    });
+
+    criarGrafico(formas);
+}
+
+function criarGrafico(dados) {
+    const ctx = document.getElementById('grafico').getContext('2d');
+    if (window.grafico) window.grafico.destroy();
+
+    window.grafico = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(dados),
+            datasets: [{
+                data: Object.values(dados),
+                backgroundColor: ['#36a2eb', '#4bc0c0', '#ff6384', '#ffce56']
+            }]
+        }
+    });
+}
+
+function status(msg) {
+    document.getElementById("status").innerHTML = msg;
+}
+</script>
+
+</body>
+</html>
